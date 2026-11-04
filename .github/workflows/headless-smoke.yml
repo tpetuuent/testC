@@ -1,0 +1,32 @@
+name: Headless smoke tests
+
+on:
+  push:
+    branches: [main, "test/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  headless:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Run 1000 deterministic headless scenarios
+        run: dotnet run --configuration Release --project tests/HeadlessSmoke/HeadlessSmoke.csproj -- 1000
+      - name: Upload result and replay on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: headless-smoke-results
+          path: test-results/
+          if-no-files-found: warn
+          retention-days: 7
